@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-from initialize_IA import ConnectBrain
-from valid_data_IA import MatchReport
+from .initialize_IA import ConnectBrain
+from .valid_data_IA import MatchReport
 
 # Esta clase sirve para hacer un query al cerebro de Open AI
 class GetQuery:
@@ -52,10 +52,10 @@ if __name__ == "__main__":
     brain = ConnectBrain(key=api_key).connect()
 
     # El informe del partido
-    match_data = """Resultado del partido: Real Madrid 1 : 0 Benfica
+    match_data = """Resultado del partido: Real Madrid 2 : 0 Benfica
 Mejor jugador del partido: Vinicius (uiidgh1234)
-equipo titular: courtois (uiidqs7425), arnold (uidas7554), asensio (uiidqw6127), alaba (uiidkl7845), carreras (uiidvf7412), valverde (uiidqw6751), guler (uiidvb4567), Tchouaméni (uiidrf7894), mbappe (uiidbv4554), Vinicius (uiidgh1234), rodrygo (uiidñs0821)
-Eventos del partido: minuto 16 gol de Tchouaméni (uiidrf7894), minuto 16 asistencia de mbappe (uiidbv4554), minuto 34 gol de Guler (uiidvb4567), minuto 34 asistencia de mbappe (uiidbv4554), minuto 57 asensio (uiidqw6127) recibió tarjeta amarilla, en el minuto 77 salió valverde (uiidqw6751) y entró mastantuono (uiidwz2587), minuto 79 alaba (uiidkl7845) recibió tarjeta roja, minuto 80 asensio (uiidqw6127) recibió roja despues de una doble amarilla.   
+equipo titular: courtois (uiidqs7425), arnold (uidas7554), asensio (uiidqw6127), alaba (uiidkl7845), carreras (uiidvf7412), valverde (uiidqw6751), guler (uiidvb4567), messi (uiidrf7894), mbappe (uiidbv4554), Vinicius (uiidgh1234), rodrygo (uiidñs0821)
+Eventos del partido: minuto 16 gol de Messi (uiidrf7894), minuto 16 asistencia de mbappe (uiidbv4554), minuto 34 gol de messi (uiidvb4567), minuto 34 asistencia de mbappe (uiidbv4554), minuto 57 asensio (uiidqw6127) recibió tarjeta amarilla, en el minuto 77 salió valverde (uiidqw6751) y entró mastantuono (uiidwz2587), minuto 79 alaba (uiidkl7845) recibió tarjeta roja, minuto 80 asensio (uiidqw6127) recibió roja despues de una doble amarilla.   
 duracion del partido: 45 + 3 y 45 + 7
 Estadisticas del partido: ..."""
 
@@ -68,8 +68,3 @@ Estadisticas del partido: ..."""
 
     # Hacemos la query
     report = GetQuery(brain=brain, agent=ia_config, format=MatchReport).make_query()
-
-    for i in report:
-        for e in i:
-            for d in e:
-                print(d)

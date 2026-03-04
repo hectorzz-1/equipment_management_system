@@ -1,7 +1,5 @@
-from dataclasses import dataclass
-from uuid import UUID                 
-from initialize_db import DataBaseMCB 
-from dataclasses import asdict        
+from dataclasses import dataclass, asdict 
+from uuid import UUID
 
 
 # Esta clase retorna un objeto
@@ -121,13 +119,179 @@ class StatisticsAction:
             self.db.conn.rollback()
             print("Error:", e)
 
+"""
+from uuid import UUID
+
+from agent.valid_data_IA import MatchReport
+from db.table_statistics import Statistics, StatisticsAction
+
+# nos conectamos a la base de datos
+with DataBaseMCB() as db:
+    # inicializamos las estadsticas de un jugador
+    hector_statistics = Statistics(id_player=UUID("e2319e66-cd63-4863-9d69-0016e7390c50"))
+
+    # Insertamos las estadisticas a la base de datos
+    StatisticsAction(db=db, data=hector_statistics, sql=StatisticSQL).insert()"""            
 
 
-if __name__ == "__main__":
-    # nos conectamos a la base de datos
-    with DataBaseMCB() as db:
-        # inicializamos las estadsticas de un jugador
-        hector_statistics = Statistics(id_player=UUID("e2319e66-cd63-4863-9d69-0016e7390c50"))
+# Su funcion es que con un modelo de pydantic con datos ordenados
+# los agarre y actualice la base de datos automaticamente
+class StatisticsUpdateA:
+    
+                          # : MatchReport
+    def __init__(self,report , db):
+        # Modelo Pydantic
+        self.report = report
+        # Conexión con una base de datos
+        self.db = db
 
-        # Insertamos las estadisticas a la base de datos
-        StatisticsAction(db=db, data=hector_statistics, sql=StatisticSQL).insert()
+    # Actualiza la base de datos
+    def action(self):
+        # Iteramos sobre los diferente objetos
+        for player in self.report.players:
+
+            # SQL que usamos para actualizar la base de datos
+            sql_player = """
+                UPDATE statistics
+                SET 
+                    goals = goals + %(goals)s,
+                    assists = assists + %(assists)s,
+                    matches = matches + %(matches)s,
+                    minutes = minutes + %(minutes)s,
+                    yellow_card = yellow_card + %(yellow_card)s,
+                    red_card = red_card + %(red_card)s
+                WHERE id_player = %(id_player)s 
+                RETURNING *;
+                """
+
+            # Estraemos los diferentes datos para agregarlos
+            data_player = {
+                "id_player" : player.id_player,
+                "goals" : player.goals,
+                "assists" : player.assists,
+                "matches" : player.match,
+                "minutes" : player.minutes_played,
+                "yellow_card" : player.yellow_card,
+                "red_card" : player.rd_card
+            }
+
+            # Intentamos actualizar la base de datos
+            try: 
+                self.db.cur.execute(sql_player, data_player)
+
+            # Si no logra hacer el UPDATE 
+            # entonces retorna el error
+            except Exception as e:
+                self.db.conn.rollback()
+                print("Error:", e)
+
+            # Si algun dato fue erroneo y la tabla 
+            # no se actualizó entonces retorna un error
+            if self.db.cur.rowcount == 0:
+                raise ValueError("Statistics for player not found")
+            
+""""import os
+import json
+from pathlib import Path
+from dotenv import load_dotenv
+
+from db.initialize_db import DataBaseMCB
+from db.table_statistics import StatidticsUpdateA
+from agent.initialize_IA import ConnectBrain
+from agent.valid_data_IA import MatchReport
+from agent.actions_IA import GetQuery
+
+
+
+# Cargamos el .env con la ruta absoluta
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+
+# Obtenemos la API KEY
+api_key = os.getenv("API_KEY_OPENAI")
+
+# Nos conectamos al cerebro de OpenAIS
+brain = ConnectBrain(key=api_key).connect()
+
+# El informe del partido
+match_data = """
+"""Resultado del partido: Real Madrid 2 : 0 Benfica
+Mejor jugador del partido: hector (69d9c807-44de-46d6-9bc2-83fe33f49f6e)
+equipo titular: hector (69d9c807-44de-46d6-9bc2-83fe33f49f6e), santiago (e2319e66-cd63-4863-9d69-0016e7390c50)
+Eventos del partido: minuto 16 gol de hector, minuto 16 asistencia de santiago, minuto 34 gol de hector, minuto 34 asistencia de santiago.   
+duracion del partido: 45 + 3 y 45 + 7
+Estadisticas del partido: ..."""
+"""
+
+BASE_JSON = Path(__file__).resolve().parent / "config_IA.json"
+
+# Cargamos las configuraciones del agente
+with open(BASE_JSON, "r") as file:
+    ia_config = json.load(file)
+    ia_config["memory"].append({"role" : "user", "content" : match_data})
+
+# Creamos el reporte
+report = GetQuery(brain=brain, agent=ia_config, format=MatchReport).make_query()
+
+
+# Iniciamos session en la base de datos
+with DataBaseMCB() as db:
+
+    # Actualizamos la base de datos
+    StatisticsUpdateA(db=db, report=report).action()"""
+
+
+# Clase que actualiza las estadisticas del jugador
+# en la tabla statistics de manera manual
+class StatisticsUpdateM:
+
+    def __init__(self,db, id: UUID, attributes: str | int, colmn:str):
+        # Una base de datos
+        self.db = db
+        # Id del jugador al cual queremos agregar alguna estadisitica
+        self.id = id
+        # Columna del jugador la cual queremos modificar
+        self.colmn = colmn
+        # Atributo por el cual queramos modificar
+        self.attributes = attributes
+
+    # Metodo cual actualiza la base de datos
+    def action(self):
+        # sql que usamos para actualizar la tabla
+        sql = f"""
+        UPDATE statistics
+        SET {str(self.colmn)} = {str(self.colmn)} + %(attribute)s
+        WHERE id_player = %(id)s
+        RETURNING *;
+        """
+
+        # Datos para modificar la tabla
+        data = {
+            "attribute" : self.attributes,
+            "id" : str(self.id)
+        }
+
+        # Intentamos actualizar la base de datos
+        try: 
+            self.db.cur.execute(sql, data)
+                  
+        # Si no logra hacer el UPDATE 
+        # entonces retorna el error
+        except Exception as e:
+            self.db.conn.rollback()
+            print("Error:", e)
+        
+        # Si algun dato fue erroneo y la tabla 
+        # no se actualizó entonces retorna un error
+        if self.db.cur.rowcount == 0:
+            raise ValueError("Statistics for player not found")
+
+"""
+from uuid import UUID
+
+from db.initialize_db import DataBaseMCB
+from db.table_statistics import StatisticsUpdateM
+
+with DataBaseMCB() as db:
+    StatisticsUpdateM(db=db, id=UUID("69d9c807-44de-46d6-9bc2-83fe33f49f6e"), attributes=2, colmn="goals").action()
+"""

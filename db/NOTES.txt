@@ -6,3 +6,6 @@
 2. Cuando se termine de hacer la clase de StatisticsAction ingeniar una manera para que
    antes de hacer el insert a la base de datos se valide que id_player si sea el id real
    de un jugador de la base de datos.
+
+3. Al momento de hacer el main no dejar que el usuario eliga que atributo cambiar de la 
+tabla players

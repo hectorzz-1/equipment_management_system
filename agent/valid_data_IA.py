@@ -15,7 +15,7 @@ class PlayerStats(BaseModel):
     rd_card: int = Field(default=0, ge=0)
     minutes_played: int = Field(default=0, ge=0)
     # Validar que no sea menor que 0 ni mayor que 1 
-    match: bool = False
+    match: int = Field(default=0, ge=0, li=1)
 
 # Guradamos los judores en una lista
 class MatchReport(BaseModel):
