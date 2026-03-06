@@ -295,3 +295,92 @@ from db.table_statistics import StatisticsUpdateM
 with DataBaseMCB() as db:
     StatisticsUpdateM(db=db, id=UUID("69d9c807-44de-46d6-9bc2-83fe33f49f6e"), attributes=2, colmn="goals").action()
 """
+
+
+# Retorna las Datos de la tabla statistics
+# get_all() retorna una [()] con las filas de la base de datos
+# get_by_colmn retorna una [()] con la columna de esa base de datos
+# get_by_id retorna una () con la fila donde esta el id
+# get_by_id y pasas column retorna una () con la columna del id deaseado
+class StatisticSelect:
+
+    # Columnas habiles en la base de datos
+    ALLOWED_COLUMNS = {"goals", "assists", "matches", "minutes", "yellow_card", "red_card"}
+    colmns = "goals, assists, matches, minutes, yellow_card, red_card"
+
+    def __init__(self, db):
+        # Base de datos a la que se conecta
+        self.db = db
+
+    # Retorna todos los datos de la base de datos
+    def get_all(self):
+        
+        # creamos el sql
+        sql = f"SELECT {self.colmns} FROM statistics"
+        
+        # Ejecuta el sql
+        self.db.cur.execute(sql)
+
+        # Retornamos los datos
+        return self.db.cur.fetchall()
+
+    # Retornamos todos los datos de una columna
+    def get_by_colmn(self, colmn):
+        # Validamos la columna que nos pasen
+        if str(colmn) not in self.ALLOWED_COLUMNS:
+                raise ValueError("Invalid column")
+        # Creamos el sql
+        sql = f"SELECT {str(colmn)} FROM statistics"
+
+        # Ejecuta el sql
+        self.db.cur.execute(sql)
+
+        # Retornamos los datos
+        return self.db.cur.fetchall()
+
+    # Retorna la fila donde el id sea el deseado
+    # y si le pasas una columna solo retorna la columna
+    # donde esté ese id
+    def get_by_id(self, id, colmn=None):
+        # Si el usuario no puso el parametro colmn
+        # entonces select pasa a ser todas las columnas de la bd
+        if colmn == None:
+            select = str(self.colmns)
+        # Si pasa colmn, entonces se le atribuye el valor a select
+        else:
+            # Validar que colmn sea una columna valida de la base de datos
+            if str(colmn) not in self.ALLOWED_COLUMNS:
+                raise ValueError("Invalid column")
+            
+            select = f"{str(colmn)}"
+        # Creamos el sql
+        sql = f"""
+                SELECT {str(select)}
+                FROM statistics
+                WHERE id_player = %(id)s
+            """
+        # preparamos el id
+        data = {
+            "id" : str(id)
+            }
+        
+        # Ejecutamos el sql
+        self.db.cur.execute(sql, data)
+        # Retornamos los datos
+        return self.db.cur.fetchall()
+    
+"""
+from db.initialize_db import DataBaseMCB
+from db.table_statistics import StatisticSelect
+
+# Iniciamos session en la base de datos
+with DataBaseMCB() as db:
+
+    # Hacemos la prueba sobre los difeterentes esenarios
+    print(StatisticSelect(db=db).get_all()) # retornamos todos los datos
+    print(StatisticSelect(db=db).get_by_colmn(colmn="goals")) # retornamos todos los goles
+    # retornamos la fila con id e2319e66-cd63-4863-9d69-0016e7390c50
+    print(StatisticSelect(db=db).get_by_id(id="e2319e66-cd63-4863-9d69-0016e7390c50"))
+    # retornamos los goles del jugador con el id e2319e66-cd63-4863-9d69-0016e7390c50
+    print(StatisticSelect(db=db).get_by_id(id="e2319e66-cd63-4863-9d69-0016e7390c50", colmn="goals"))
+"""
