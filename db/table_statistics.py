@@ -71,33 +71,25 @@ class Statistics:
             raise ValueError("Red_cards cannot exceed matches played")
 
 
-# Esta clase contendrá el lenguaje sql
-# que se usará para la tabla statistics
-class StatisticSQL:
-
-    # SQL que sirve para hacer un insert en la tabla statistics
-    insert = """
-        INSERT INTO statistics (id_player ,goals, assists, matches, minutes, yellow_card, red_card)
-        VALUES (%(id_player)s ,%(goals)s, %(assists)s, %(matches)s, %(minutes)s, %(yellow_card)s, %(red_card)s)
-        """
-    
-
 # Gestiona la tabla statistics
 # inserta
 # elimina
 # retorna
-class StatisticsAction:
+class StatisticsInsert:
     
-    def __init__(self, db, data, sql: StatisticSQL):
+    def __init__(self, db, data):
         # Pasar la base de datos
         self.db = db
         # Pasar los datos que se insertarán
         self.data = data
-        # Pasar la clase StatisticSQL para disponer del lenguaje SQL
-        self.sql = sql
 
     # Inserta las estadisticas de un jugador en la base de datos
-    def insert(self):
+    def action(self):
+
+        sql_insert = """
+        INSERT INTO statistics (id_player ,goals, assists, matches, minutes, yellow_card, red_card)
+        VALUES (%(id_player)s ,%(goals)s, %(assists)s, %(matches)s, %(minutes)s, %(yellow_card)s, %(red_card)s)        
+        """
 
         # Pasamos el id_player de tipo UUID a tipo str
         # para que la base de datos lo pueda manejar
@@ -108,7 +100,7 @@ class StatisticsAction:
         # en la tabla statistics
         try: 
             self.db.cur.execute(
-                self.sql.insert, # sql
+                sql_insert, # sql
                 # volvemos el objeto un diccionario
                 asdict(self.data)
             )
@@ -190,7 +182,8 @@ class StatisticsUpdateA:
             if self.db.cur.rowcount == 0:
                 raise ValueError("Statistics for player not found")
             
-""""import os
+""""
+import os
 import json
 from pathlib import Path
 from dotenv import load_dotenv
@@ -200,7 +193,6 @@ from db.table_statistics import StatidticsUpdateA
 from agent.initialize_IA import ConnectBrain
 from agent.valid_data_IA import MatchReport
 from agent.actions_IA import GetQuery
-
 
 
 # Cargamos el .env con la ruta absoluta
@@ -306,11 +298,33 @@ class StatisticSelect:
 
     # Columnas habiles en la base de datos
     ALLOWED_COLUMNS = {"goals", "assists", "matches", "minutes", "yellow_card", "red_card"}
-    colmns = "goals, assists, matches, minutes, yellow_card, red_card"
+    colmns = "id_player ,goals, assists, matches, minutes, yellow_card, red_card"
 
     def __init__(self, db):
         # Base de datos a la que se conecta
         self.db = db
+
+
+    # Sirve para ordenar los datos que retorna el fetchall
+    def _data_to_dict(self, data_statistics):
+        # Inicializamos lista de estadisticas ordenadas
+        list_ordered_statistics = []
+        
+        for player in data_statistics:
+            # Ordenamos las estadisticas de cada jugador en un diccionario
+            ordered_statistics = {
+                "id_player" : player[0],
+                "goals" : player[1],
+                "assists" : player[2],
+                "matches" : player[3],
+                "minutes" : player[4],
+                "yellow_card" : player[5],
+                "red_card" : player[6]
+            }
+            # Lo añadimos a la lista
+            list_ordered_statistics.append(ordered_statistics)
+        
+        return list_ordered_statistics
 
     # Retorna todos los datos de la base de datos
     def get_all(self):
@@ -321,8 +335,10 @@ class StatisticSelect:
         # Ejecuta el sql
         self.db.cur.execute(sql)
 
-        # Retornamos los datos
-        return self.db.cur.fetchall()
+        # Obtemos los datos
+        data_statistics = self.db.cur.fetchall()
+        # Retornamos los datos ordenados en un {:}
+        return self._data_to_dict(data_statistics=data_statistics)
 
     # Retornamos todos los datos de una columna
     def get_by_colmn(self, colmn):
@@ -335,8 +351,10 @@ class StatisticSelect:
         # Ejecuta el sql
         self.db.cur.execute(sql)
 
-        # Retornamos los datos
-        return self.db.cur.fetchall()
+        # Obtemos los datos
+        data_statistics = self.db.cur.fetchall()
+        # Retornamos los datos ordenados en un {:}
+        return self._data_to_dict(data_statistics=data_statistics)
 
     # Retorna la fila donde el id sea el deseado
     # y si le pasas una columna solo retorna la columna
@@ -366,8 +384,10 @@ class StatisticSelect:
         
         # Ejecutamos el sql
         self.db.cur.execute(sql, data)
-        # Retornamos los datos
-        return self.db.cur.fetchall()
+        # Obtemos los datos
+        data_statistics = self.db.cur.fetchall()
+        # Retornamos los datos ordenados en un {:}
+        return self._data_to_dict(data_statistics=data_statistics)
     
 """
 from db.initialize_db import DataBaseMCB

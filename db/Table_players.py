@@ -23,7 +23,7 @@ class Player:
     def __post_init__(self):
 
         # Valida que name sea str
-        if isinstance(self.name, str):
+        if not isinstance(self.name, str):
             raise ValueError("name must be string")
         # Valida que el name no esté vacío
         if not self.name.strip():
@@ -33,7 +33,7 @@ class Player:
             raise ValueError("name is very long")
         
         # Valida que last_name sea str
-        if isinstance(self.last_name, str):
+        if not isinstance(self.last_name, str):
             raise ValueError("last_name must be string")
         # Valida que el last_name no esté vacío
         if not self.last_name.strip():
@@ -43,7 +43,7 @@ class Player:
             raise ValueError("last_name is very long")
         
         # Valida si number es un int
-        if isinstance(self.number, int):
+        if not isinstance(self.number, int):
             raise ValueError("number must be integer")
         # Valida que number no sea menor que 1
         if self.number <= 0:
@@ -161,6 +161,23 @@ class PlayerSelect:
         # Base de datos a la que se conecta
         self.db = db
 
+    def _data_to_dict(self, data_players):
+        # Inicializamos lista con los datos ordenados de lo jugadores
+        list_ordered_statistics = []
+        
+        for player in data_players:
+            # Ordenamos los datos de cada jugador en un diccionario
+            ordered_statistics = {
+                "id" : player[0],
+                "name" : player[1],
+                "last_name" : player[2],
+                "number" : player[3],
+            }
+            # Lo añadimos a la lista
+            list_ordered_statistics.append(ordered_statistics)
+        
+        return list_ordered_statistics
+
     # Retorna todos los datos de la base de datos
     def get_all(self):
         
@@ -170,8 +187,10 @@ class PlayerSelect:
         # Ejecuta el sql
         self.db.cur.execute(sql)
 
-        # Retornamos los datos
-        return self.db.cur.fetchall()
+        # Obtemos los datos
+        data_player = self.db.cur.fetchall()
+        # Retornamos los datos ordenados en un {:}
+        return self._data_to_dict(data_players=data_player)
 
     # Retornamos todos los datos de una columna
     def get_by_colmn(self, colmn):
@@ -184,8 +203,11 @@ class PlayerSelect:
         # Ejecuta el sql
         self.db.cur.execute(sql)
 
-        # Retornamos los datos
-        return self.db.cur.fetchall()
+        # Obtemos los datos
+        data_player = self.db.cur.fetchall()
+        # Retornamos los datos ordenados en un {:}
+        return self._data_to_dict(data_players=data_player)
+
 
     # Retorna la fila donde el id sea el deseado
     # y si le pasas una columna solo retorna la columna
@@ -215,8 +237,12 @@ class PlayerSelect:
         
         # Ejecutamos el sql
         self.db.cur.execute(sql, data)
-        # Retornamos los datos
-        return self.db.cur.fetchall()
+        
+        # Obtemos los datos
+        data_player = self.db.cur.fetchall()
+        # Retornamos los datos ordenados en un {:}
+        return self._data_to_dict(data_players=data_player)
+
 
 """
 from db.initialize_db import DataBaseMCB
